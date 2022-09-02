@@ -1,0 +1,59 @@
+/ansible/nginxphpfpm.yml
+---
+- hosts: remote-host
+  gather_facts: no
+  become: yes
+  roles:
+   - nginxphpfpm
+   
+/ansible/nginxphpfpm/tasks/main.yml
+---
+- name: install services 
+  yum:
+    name:
+      - nginx
+      - php
+      - php-fpm
+    state: installed
+ 
+- name: start services
+  service:
+    name: '{{ item }}'
+    state: started
+    enabled: yes
+  with_items:
+    - nginx
+    - php-fpm
+ 
+- name: apply php-fpm template
+  template:
+    src: www.conf.j2
+    dest: /etc/php-fpm.d/www.conf
+  notify: Restart php-fpm
+ 
+- name: apply nginx template
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: Restart nginx
+ 
+- name: apply index.php
+  template:
+    src: index.php.j2
+    dest: /usr/share/nginx/html/index.php
+  notify: Restart nginx
+  
+/ansible/nginxphpfpm/handlers/main.yml
+  ---
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+ 
+- name: Restart php-fpm
+  service:
+    name: php-fpm
+    state: restarted
+
+
+  
