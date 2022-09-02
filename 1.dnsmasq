@@ -1,0 +1,28 @@
+/ansible/dnsmasq.yml
+---
+- hosts: remote-host
+  gather_facts: no
+  become: yes
+  roles:
+   - dnsmasq
+   
+/ansible/dnsmasq/tasks/main.yml
+   ---
+- name: Install dnsmasq
+  yum:
+    name: dnsmasq
+    state: installed
+ 
+- name: Add dnsmasq config
+  template:
+    src: /ansible/dnsmasq/templates/dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Start service
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes
