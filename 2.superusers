@@ -1,0 +1,49 @@
+/ansible/superusers.yml
+---
+- hosts: remote-host
+  gather_facts: no
+  become: yes
+  roles:
+   - superusers
+ 
+ /ansible/dnsmasq/tasks/main.yml
+---
+ - name: add group
+   ansible.builtin.group:
+     name: superusers
+ - name: add group in sudoers
+   ansible.builtin.lineinfile:
+     path: /etc/sudoers
+     state: present
+     regexp: '^%superusers ALL='
+     line: '%superusers ALL=(ALL) NOPASSWD: ALL'
+     validate: /usr/sbin/visudo -cf %s
+ - name: Add users
+   ansible.builtin.user:
+     name: '{{ item }}'
+     shell: /bin/bash
+     groups: superusers
+     append: yes
+   with_items:
+     - user2
+     - user3
+ - name: Create users ~/.ssh directory
+   file:
+     path: /home/{{ item }}/.ssh
+     state: directory
+     mode: 0700
+     owner: '{{ item }}'
+     group: '{{ item }}'
+   with_items:
+     - user2
+     - user3
+ - name: Add users public key
+   copy:
+     src: '{{ item.src }}'
+     dest: '{{ item.dest}}'
+     mode: 0644
+     owner: '{{ item.owner }}'
+     group: '{{ item.group }}'
+   with_items:
+     - { src: 'id_rsa.pub', dest: '/home/user2/.ssh/authorized_keys', owner: 'user2', group: 'user2' }
+     - { src: 'id_rsa2.pub', dest: '/home/user3/.ssh/authorized_keys', owner: 'user3', group: 'user3' }
